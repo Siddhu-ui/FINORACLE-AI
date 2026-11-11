@@ -26,7 +26,13 @@ export const mockStore = {
     const raw = localStorage.getItem('finoracle_profile');
     if (!raw) return null;
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // Cleanse any legacy unverified dummy 145000 value
+      if (parsed.monthly_income === 145000 && !parsed.onboarding_completed) {
+        parsed.monthly_income = 0;
+        localStorage.setItem('finoracle_profile', JSON.stringify(parsed));
+      }
+      return parsed;
     } catch {
       return null;
     }

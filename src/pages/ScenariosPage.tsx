@@ -29,7 +29,7 @@ import {
 } from 'recharts';
 import { Card, PageHeader, Modal, Badge } from '@/components/ui';
 import { formatCurrency, formatPercent } from '@/utils';
-import { scenarioService, transactionService } from '@/services/supabase';
+import { scenarioService, transactionService, profileService } from '@/services/supabase';
 import type { Scenario, ScenarioData, ScenarioImpact } from '@/types';
 
 interface SimulationChange {
@@ -71,31 +71,35 @@ const chartTooltipStyle = {
 };
 
 export default function ScenariosPage() {
-  // Baseline financial state (can be fetched or customized)
-  const [baselineIncome, setBaselineIncome] = useState<number>(85000);
-  const [baselineExpenses, setBaselineExpenses] = useState<number>(50000);
+  // Baseline financial state loaded from authenticated user records
+  const [baselineIncome, setBaselineIncome] = useState<number>(0);
+  const [baselineExpenses, setBaselineExpenses] = useState<number>(0);
 
-  // Active changes in the simulator
-  const [changes, setChanges] = useState<SimulationChange[]>([
-    { id: '1', type: 'income_increase', label: 'Annual Salary Increment', amount: 15000 },
-  ]);
+  // Active changes in the simulator (starts clean)
+  const [changes, setChanges] = useState<SimulationChange[]>([]);
 
   // Saved scenarios
   const [savedScenarios, setSavedScenarios] = useState<Scenario[]>([]);
-  const [scenarioName, setScenarioName] = useState('My 2027 Scenario');
+  const [scenarioName, setScenarioName] = useState('My Financial Scenario');
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    loadSavedScenarios();
+    loadBaselineAndScenarios();
   }, []);
 
-  async function loadSavedScenarios() {
+  async function loadBaselineAndScenarios() {
     try {
-      const data = await scenarioService.list();
-      setSavedScenarios(data);
+      const [scenariosData, userProfile] = await Promise.all([
+        scenarioService.list(),
+        profileService.get(),
+      ]);
+      setSavedScenarios(scenariosData);
+      if (userProfile && userProfile.monthly_income > 0) {
+        setBaselineIncome(userProfile.monthly_income);
+      }
     } catch (err) {
-      console.error('Failed to load saved scenarios:', err);
+      console.error('Failed to load baseline and scenarios:', err);
     }
   }
 
@@ -227,7 +231,7 @@ export default function ScenariosPage() {
       });
 
       setSaveModalOpen(false);
-      await loadSavedScenarios();
+      await loadBaselineAndScenarios();
     } catch (err) {
       console.error('Failed to save scenario:', err);
     } finally {
@@ -238,7 +242,7 @@ export default function ScenariosPage() {
   async function handleDeleteSaved(id: string) {
     try {
       await scenarioService.delete(id);
-      await loadSavedScenarios();
+      await loadBaselineAndScenarios();
     } catch (err) {
       console.error('Failed to delete scenario:', err);
     }

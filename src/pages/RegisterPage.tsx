@@ -66,7 +66,7 @@ export default function RegisterPage() {
     if (authError) {
       setError(authError);
     } else {
-      navigate('/dashboard');
+      navigate('/onboarding');
     }
   };
 

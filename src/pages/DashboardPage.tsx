@@ -295,7 +295,9 @@ export default function DashboardPage() {
                 </div>
               </div>
               <p className="text-2xl font-bold text-text-primary tracking-tight">
-                {formatCurrency(data!.total_income)}
+                {data!.total_income > 0 || profile?.income_frequency === 'No current income' || profile?.occupation === 'Student'
+                  ? formatCurrency(data!.total_income)
+                  : 'Income not configured'}
               </p>
               <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
                 {data!.actual_income > 0 ? (
@@ -305,13 +307,13 @@ export default function DashboardPage() {
                 ) : data!.planned_monthly_income > 0 ? (
                   <span>Base planned income</span>
                 ) : (
-                  <span>No inflows recorded</span>
+                  <span>Income not configured</span>
                 )}
                 <button
                   onClick={() => setIsIncomeModalOpen(true)}
                   className="text-primary hover:underline"
                 >
-                  Edit
+                  Configure
                 </button>
               </div>
             </Card>
@@ -330,7 +332,9 @@ export default function DashboardPage() {
                 {formatCurrency(data!.total_expenses)}
               </p>
               <p className="text-xs text-text-muted mt-2">
-                {period === 'this_month'
+                {data!.total_expenses === 0
+                  ? 'No expenses recorded'
+                  : period === 'this_month'
                   ? 'Expenses logged this month'
                   : 'Total period expenses'}
               </p>

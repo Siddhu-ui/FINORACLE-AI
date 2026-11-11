@@ -17,6 +17,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { profileService } from '@/services/supabase';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -48,7 +49,16 @@ export default function LoginPage() {
     if (authError) {
       setError(authError);
     } else {
-      navigate('/dashboard');
+      try {
+        const prof = await profileService.get();
+        if (!prof || !prof.onboarding_completed) {
+          navigate('/onboarding');
+        } else {
+          navigate('/dashboard');
+        }
+      } catch {
+        navigate('/dashboard');
+      }
     }
   };
 

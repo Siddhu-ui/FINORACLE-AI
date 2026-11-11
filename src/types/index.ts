@@ -12,12 +12,27 @@ export interface User {
 }
 
 export type IncomeType =
+  | 'Student'
+  | 'Salaried employee'
+  | 'Business owner / Entrepreneur'
+  | 'Freelancer'
+  | 'Gig worker'
+  | 'Gig Worker'
+  | 'Sales professional'
+  | 'Self-employed'
+  | 'Homemaker'
+  | 'Retired'
+  | 'Other'
   | 'Salaried'
   | 'Freelance'
-  | 'Business'
-  | 'Gig Worker'
-  | 'Student'
-  | 'Other';
+  | 'Business';
+
+export type IncomeFrequency =
+  | 'Monthly'
+  | 'Weekly'
+  | 'Daily'
+  | 'Irregular'
+  | 'No current income';
 
 export interface AdditionalIncomeSource {
   id: string;
@@ -37,6 +52,8 @@ export interface UserProfile {
   occupation?: string;
   monthly_income: number;
   income_type?: IncomeType;
+  income_frequency?: IncomeFrequency;
+  income_details?: Record<string, any>;
   additional_income_sources?: AdditionalIncomeSource[];
   planning_period_start_day?: number; // e.g. 1st of month
   onboarding_completed?: boolean;
