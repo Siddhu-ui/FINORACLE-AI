@@ -13,6 +13,7 @@ import type {
   ChatSession,
   ChatMessage,
   PaginatedResponse,
+  FinancialInsight,
 } from '@/types';
 import { getCurrentMonth, getMonthRange, getCategoryColor } from '@/utils';
 
@@ -68,7 +69,15 @@ export const profileService = {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .upsert({ ...profile, user_id: user.id, email: user.email }, { onConflict: 'user_id' })
+          .upsert(
+            {
+              ...profile,
+              user_id: user.id,
+              email: user.email || profile.email,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id' }
+          )
           .select()
           .single();
 
@@ -137,7 +146,7 @@ export const transactionService = {
       }
     }
 
-    // Mock Store Filter
+    // Local Store Filter (User's real transactions)
     let list = mockStore.getTransactions();
     if (params?.type) list = list.filter((t) => t.type === params.type);
     if (params?.category) list = list.filter((t) => t.category === params.category);
@@ -147,6 +156,9 @@ export const transactionService = {
       const q = params.search.toLowerCase();
       list = list.filter((t) => t.description.toLowerCase().includes(q));
     }
+
+    // Default sort by date desc
+    list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     const total = list.length;
     const from = (page - 1) * perPage;
@@ -308,6 +320,11 @@ export const budgetService = {
     return mockStore.getBudgets();
   },
 
+  async getForMonth(month: string): Promise<Budget | null> {
+    const all = await budgetService.list();
+    return all.find((b) => b.month === month) || null;
+  },
+
   async create(budget: BudgetFormData): Promise<Budget> {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -316,7 +333,13 @@ export const budgetService = {
       try {
         const { data, error } = await supabase
           .from('budgets')
-          .insert({ name: budget.name, month: budget.month, total_limit: budget.total_limit, user_id: user.id })
+          .insert({
+            name: budget.name,
+            month: budget.month,
+            planned_income: budget.planned_income ?? 0,
+            total_limit: budget.total_limit,
+            user_id: user.id,
+          })
           .select()
           .single();
 
@@ -325,7 +348,10 @@ export const budgetService = {
             const cats = budget.categories.map((c) => ({ ...c, budget_id: data.id }));
             await supabase.from('budget_categories').insert(cats);
           }
-          return { ...data, categories: budget.categories.map((c) => ({ ...c, id: '', budget_id: data.id })) };
+          return {
+            ...data,
+            categories: budget.categories.map((c) => ({ ...c, id: '', budget_id: data.id })),
+          };
         }
       } catch {
         // fallback
@@ -340,23 +366,30 @@ export const budgetService = {
 
     if (isSupabaseConfigured) {
       try {
-        if (budget.name || budget.total_limit || budget.month) {
-          await supabase
-            .from('budgets')
-            .update({
-              ...(budget.name && { name: budget.name }),
-              ...(budget.total_limit && { total_limit: budget.total_limit }),
-              ...(budget.month && { month: budget.month }),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', id)
-            .eq('user_id', user.id);
+        await supabase
+          .from('budgets')
+          .update({
+            ...(budget.name && { name: budget.name }),
+            ...(budget.total_limit !== undefined && { total_limit: budget.total_limit }),
+            ...(budget.planned_income !== undefined && { planned_income: budget.planned_income }),
+            ...(budget.month && { month: budget.month }),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (budget.categories) {
+          await supabase.from('budget_categories').delete().eq('budget_id', id);
+          const cats = budget.categories.map((c) => ({ ...c, budget_id: id }));
+          await supabase.from('budget_categories').insert(cats);
         }
         return;
       } catch {
         // fallback
       }
     }
+
+    mockStore.updateBudget(id, budget as any);
   },
 
   async delete(id: string): Promise<void> {
@@ -534,17 +567,7 @@ export const chatService = {
   async listSessions(): Promise<ChatSession[]> {
     const raw = localStorage.getItem('finoracle_chat_sessions');
     if (!raw) {
-      const initial: ChatSession[] = [
-        {
-          id: 'session-default',
-          user_id: 'usr-demo-1',
-          title: 'Financial Strategy Session',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      localStorage.setItem('finoracle_chat_sessions', JSON.stringify(initial));
-      return initial;
+      return [];
     }
     return JSON.parse(raw);
   },
@@ -553,7 +576,7 @@ export const chatService = {
     const sessions = await chatService.listSessions();
     const newSession: ChatSession = {
       id: `session-${Date.now()}`,
-      user_id: 'usr-demo-1',
+      user_id: 'usr-default',
       title,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -578,7 +601,6 @@ export const chatService = {
       created_at: new Date().toISOString(),
     };
 
-    // Call backend API if running
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '/api';
       const res = await fetch(`${apiUrl}/assistant/chat`, {
@@ -600,7 +622,7 @@ export const chatService = {
         return aiMsg;
       }
     } catch {
-      // fallback handled by caller or local knowledge
+      // fallback handled by local knowledge
     }
 
     throw new Error('Fallback to local intelligence');
@@ -614,74 +636,196 @@ export const chatService = {
 };
 
 // ============================================================
-// Dashboard Service
+// Dashboard Service (Deterministic Real-Data Aggregation Engine)
 // ============================================================
 export const dashboardService = {
   async getData(startDate?: string, endDate?: string): Promise<DashboardData> {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    const month = getCurrentMonth();
-    const { start, end } = getMonthRange(month);
-    const rangeStart = startDate ?? start;
-    const rangeEnd = endDate ?? end;
+    const currentMonth = getCurrentMonth();
+    const { start: defaultMonthStart, end: defaultMonthEnd } = getMonthRange(currentMonth);
+    const rangeStart = startDate ?? defaultMonthStart;
+    const rangeEnd = endDate ?? defaultMonthEnd;
 
-    const txns = mockStore.getTransactions();
-    const filtered = txns.filter((t) => t.date >= rangeStart && t.date <= rangeEnd);
+    // 1. Fetch user's profile for planned base income
+    const profile = await profileService.get();
+    const plannedBaseIncome = profile?.monthly_income ?? 0;
 
-    const totalIncome = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const totalExpenses = filtered.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const savings = totalIncome - totalExpenses;
-    const savingsRate = totalIncome > 0 ? (savings / totalIncome) * 100 : 0;
+    // 2. Fetch all user transactions
+    let allTxns: Transaction[] = [];
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id);
+        if (!error && data) allTxns = data;
+      } catch {
+        allTxns = mockStore.getTransactions();
+      }
+    } else {
+      allTxns = mockStore.getTransactions();
+    }
 
-    // Category breakdown
-    const byCategory: Record<string, number> = {};
-    filtered
+    // Filter transactions within period
+    const periodTxns = allTxns.filter((t) => t.date >= rangeStart && t.date <= rangeEnd);
+
+    // Sum actual recorded inflows and outflows
+    const actualIncome = periodTxns
+      .filter((t) => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalExpenses = periodTxns
+      .filter((t) => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    // If user has not logged an income transaction this month, but configured a planned monthly salary,
+    // we clearly maintain both numbers so user can see planned vs actual
+    const totalIncome = actualIncome > 0 ? actualIncome : plannedBaseIncome;
+
+    // Net cash flow: actual money in minus actual money out
+    const netCashFlow = actualIncome - totalExpenses;
+    const savings = netCashFlow > 0 ? netCashFlow : 0;
+    const savingsRate = totalIncome > 0 ? Math.max(0, Math.min(100, (netCashFlow / totalIncome) * 100)) : 0;
+
+    // 3. Category spending breakdown (only from real transactions)
+    const categoryTotals: Record<string, number> = {};
+    periodTxns
       .filter((t) => t.type === 'expense')
       .forEach((t) => {
-        byCategory[t.category] = (byCategory[t.category] || 0) + t.amount;
+        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
       });
 
-    const spendingByCategory = Object.entries(byCategory).map(([category, amount]) => ({
-      category,
-      amount,
-      color: getCategoryColor(category),
-    }));
+    const spendingByCategory = Object.entries(categoryTotals)
+      .map(([category, amount]) => ({
+        category,
+        amount,
+        percentage: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100) : 0,
+        color: getCategoryColor(category),
+      }))
+      .sort((a, b) => b.amount - a.amount);
 
-    // Historical monthly trends
-    const incomeVsExpenses = [
-      { month: 'Oct', income: 140000, expenses: 68000 },
-      { month: 'Nov', income: 155000, expenses: 72000 },
-      { month: 'Dec', income: 145000, expenses: 79000 },
-      { month: 'Jan', income: 160000, expenses: 71000 },
-      { month: 'Feb', income: totalIncome || 173000, expenses: totalExpenses || 71200 },
-    ];
+    // 4. Monthly trends (ONLY from months where user has actual transactions)
+    const monthlyGroups: Record<string, { income: number; expenses: number }> = {};
+    allTxns.forEach((t) => {
+      const monthKey = t.date.substring(0, 7); // YYYY-MM
+      if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = { income: 0, expenses: 0 };
+      }
+      if (t.type === 'income') {
+        monthlyGroups[monthKey].income += t.amount;
+      } else {
+        monthlyGroups[monthKey].expenses += t.amount;
+      }
+    });
 
-    const savingsTrend = incomeVsExpenses.map((d) => ({
-      month: d.month,
-      savings: d.income - d.expenses,
-    }));
+    // If current month has base income but no income transactions, reflect base income if configured
+    if (plannedBaseIncome > 0 && (!monthlyGroups[currentMonth] || monthlyGroups[currentMonth].income === 0)) {
+      if (!monthlyGroups[currentMonth]) {
+        monthlyGroups[currentMonth] = { income: plannedBaseIncome, expenses: totalExpenses };
+      }
+    }
 
-    const budgets = mockStore.getBudgets();
-    const activeBudget = budgets[0];
-    const totalBudgetLimit = activeBudget ? activeBudget.total_limit : 100000;
-    const budgetUtilization = totalBudgetLimit > 0 ? (totalExpenses / totalBudgetLimit) * 100 : 0;
+    const sortedMonthKeys = Object.keys(monthlyGroups).sort();
+    const incomeVsExpenses = sortedMonthKeys.map((key) => {
+      const [year, month] = key.split('-');
+      const d = new Date(Number(year), Number(month) - 1, 1);
+      const label = d.toLocaleDateString('en-IN', { month: 'short' });
+      return {
+        month: label,
+        income: monthlyGroups[key].income,
+        expenses: monthlyGroups[key].expenses,
+      };
+    });
 
-    const goals = mockStore.getGoals();
+    const savingsTrend = sortedMonthKeys.map((key) => {
+      const [year, month] = key.split('-');
+      const d = new Date(Number(year), Number(month) - 1, 1);
+      const label = d.toLocaleDateString('en-IN', { month: 'short' });
+      return {
+        month: label,
+        savings: monthlyGroups[key].income - monthlyGroups[key].expenses,
+      };
+    });
+
+    // 5. Budget Utilization for current month
+    const budgets = await budgetService.list();
+    const activeBudget = budgets.find((b) => b.month === currentMonth) || budgets[0] || null;
+    const totalBudgetAllocated = activeBudget ? activeBudget.total_limit : 0;
+    const budgetUtilization = totalBudgetAllocated > 0 ? (totalExpenses / totalBudgetAllocated) * 100 : 0;
+
+    const categoryBudgets = (activeBudget?.categories || []).map((cat) => {
+      const spent = categoryTotals[cat.category] || 0;
+      return {
+        category: cat.category,
+        limit: cat.limit_amount,
+        spent,
+        utilization: cat.limit_amount > 0 ? (spent / cat.limit_amount) * 100 : 0,
+      };
+    });
+
+    // 6. Active Goals
+    const goals = await goalService.list();
+
+    // 7. Recent Transactions (sorted newest first)
+    const recentTransactions = [...allTxns]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 6);
+
+    // 8. Financial Insights derived strictly from real numbers
+    const insights: FinancialInsight[] = [];
+    if (actualIncome > 0 && totalExpenses > 0) {
+      if (netCashFlow < 0) {
+        insights.push({
+          type: 'warning',
+          title: 'Deficit Alert',
+          message: `Your outflows (₹${totalExpenses.toLocaleString('en-IN')}) exceeded recorded inflows by ₹${Math.abs(netCashFlow).toLocaleString('en-IN')} this period.`,
+        });
+      } else if (savingsRate >= 20) {
+        insights.push({
+          type: 'positive',
+          title: 'Disciplined Capital Retention',
+          message: `You retained ${savingsRate.toFixed(1)}% of your income this month, exceeding the 20% personal finance benchmark.`,
+        });
+      }
+    }
+
+    if (categoryBudgets.length > 0) {
+      const overspent = categoryBudgets.filter((c) => c.utilization > 100);
+      if (overspent.length > 0) {
+        insights.push({
+          type: 'warning',
+          title: 'Budget Limits Breached',
+          message: `${overspent.map((c) => c.category).join(', ')} exceeded allocated spending caps. Review discretionary outflows.`,
+        });
+      }
+    }
+
+    const hasAnyData =
+      allTxns.length > 0 ||
+      plannedBaseIncome > 0 ||
+      (budgets && budgets.length > 0) ||
+      (goals && goals.length > 0);
 
     return {
+      planned_monthly_income: plannedBaseIncome,
+      actual_income: actualIncome,
       total_income: totalIncome,
       total_expenses: totalExpenses,
-      available_balance: savings,
+      net_cash_flow: netCashFlow,
       savings,
       savings_rate: savingsRate,
+      total_budget_allocated: totalBudgetAllocated,
       budget_utilization: budgetUtilization,
-      recent_transactions: filtered.slice(0, 6),
+      has_data: hasAnyData,
+      recent_transactions: recentTransactions,
       spending_by_category: spendingByCategory,
       income_vs_expenses: incomeVsExpenses,
       savings_trend: savingsTrend,
-      active_goals: goals.slice(0, 3),
-      upcoming_bills: filtered.filter((t) => t.type === 'expense').slice(0, 2),
+      category_budgets: categoryBudgets,
+      active_goals: goals.filter((g) => g.status === 'active').slice(0, 3),
+      insights,
     };
   },
 };

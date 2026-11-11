@@ -11,6 +11,22 @@ export interface User {
   created_at: string;
 }
 
+export type IncomeType =
+  | 'Salaried'
+  | 'Freelance'
+  | 'Business'
+  | 'Gig Worker'
+  | 'Student'
+  | 'Other';
+
+export interface AdditionalIncomeSource {
+  id: string;
+  name: string;
+  amount: number;
+  frequency: 'monthly' | 'irregular' | 'one_time';
+  received_day?: number;
+}
+
 export interface UserProfile {
   id: string;
   user_id: string;
@@ -19,7 +35,11 @@ export interface UserProfile {
   phone?: string;
   date_of_birth?: string;
   occupation?: string;
-  monthly_income?: number;
+  monthly_income: number;
+  income_type?: IncomeType;
+  additional_income_sources?: AdditionalIncomeSource[];
+  planning_period_start_day?: number; // e.g. 1st of month
+  onboarding_completed?: boolean;
   currency: string;
   created_at: string;
   updated_at: string;
@@ -57,28 +77,31 @@ export const INCOME_CATEGORIES = [
   'Business',
   'Investments',
   'Allowance',
+  'Rental Income',
+  'Dividends',
   'Other Income',
 ] as const;
 
 export const EXPENSE_CATEGORIES = [
-  'Food',
   'Housing',
-  'Transport',
-  'Education',
-  'Healthcare',
-  'Shopping',
-  'Entertainment',
+  'Food',
+  'Transportation',
   'Utilities',
-  'Subscriptions',
-  'Other Expenses',
+  'Healthcare',
+  'Education',
+  'Entertainment',
+  'Shopping',
+  'Savings',
+  'Other',
 ] as const;
 
 export const PAYMENT_METHODS = [
-  'Cash',
   'UPI',
+  'Net Banking',
   'Debit Card',
   'Credit Card',
-  'Net Banking',
+  'Cash',
+  'Bank Transfer',
   'Wallet',
   'Other',
 ] as const;
@@ -89,6 +112,7 @@ export interface Budget {
   user_id: string;
   name: string;
   month: string; // YYYY-MM
+  planned_income?: number;
   total_limit: number;
   created_at: string;
   updated_at: string;
@@ -100,12 +124,13 @@ export interface BudgetCategory {
   budget_id: string;
   category: string;
   limit_amount: number;
-  spent_amount?: number; // calculated
+  spent_amount?: number; // calculated from real transactions
 }
 
 export interface BudgetFormData {
   name: string;
   month: string;
+  planned_income?: number;
   total_limit: number;
   categories: { category: string; limit_amount: number }[];
 }
@@ -252,20 +277,49 @@ export interface ChatSource {
   relevance_score: number;
 }
 
+// ---- Financial Insights ----
+export interface FinancialInsight {
+  type: 'positive' | 'warning' | 'info';
+  title: string;
+  message: string;
+}
+
 // ---- Dashboard ----
 export interface DashboardData {
+  planned_monthly_income: number;
+  actual_income: number;
   total_income: number;
   total_expenses: number;
-  available_balance: number;
+  net_cash_flow: number;
   savings: number;
   savings_rate: number;
+  total_budget_allocated: number;
   budget_utilization: number;
+  has_data: boolean;
   recent_transactions: Transaction[];
-  spending_by_category: { category: string; amount: number; color: string }[];
-  income_vs_expenses: { month: string; income: number; expenses: number }[];
-  savings_trend: { month: string; savings: number }[];
+  spending_by_category: {
+    category: string;
+    amount: number;
+    percentage: number;
+    color: string;
+  }[];
+  income_vs_expenses: {
+    month: string;
+    income: number;
+    expenses: number;
+  }[];
+  savings_trend: {
+    month: string;
+    savings: number;
+  }[];
+  category_budgets: {
+    category: string;
+    limit: number;
+    spent: number;
+    utilization: number;
+  }[];
   active_goals: FinancialGoal[];
-  upcoming_bills: Transaction[];
+  insights: FinancialInsight[];
 }
 
 // ---- Reports ----
@@ -308,7 +362,7 @@ export interface PaginatedResponse<T> {
 }
 
 // ---- Filters ----
-export type DateFilter = 'today' | 'this_week' | 'this_month' | 'last_month' | 'custom';
+export type DateFilter = 'this_month' | 'last_month' | 'last_3_months' | 'financial_year' | 'all_time';
 
 export interface DateRange {
   start: string;
