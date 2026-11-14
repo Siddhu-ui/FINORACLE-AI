@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #f5f7fa;
+  --bg-secondary: #eaf0f6;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --card-hover: #f5f7fa;
+  --card-border: #e2e8f0;
+  --border: #e2e8f0;
+  --border-hover: #159b72;
+  --text-primary: #172b4d;
+  --text-secondary: #64748b;
+  --text-muted: #64748b;
+  --text-dim: #64748b;
+  --primary: #159b72;
+  --primary-hover: #10835f;
+  --primary-light: #159b72;
+  --primary-lighter: #e8f5ef;
+  --primary-muted: rgba(21, 155, 114, 0.12);
+  --positive: #159b72;
+  --positive-muted: rgba(21, 155, 114, 0.12);
+  --negative: #d65a50;
+  --negative-muted: rgba(214, 90, 80, 0.12);
+  --warning: #a87516;
+  --warning-muted: rgba(214, 166, 74, 0.16);
+  --shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme='dark'] {
+  color-scheme: light;
+}
+
 @layer base {
   * {
     margin: 0;
@@ -16,8 +47,27 @@
   }
 
   body {
+    @apply bg-[var(--bg)] text-[var(--text-primary)] antialiased;
     min-height: 100vh;
     overflow-x: hidden;
+    font-family: 'Inter', 'Manrope', system-ui, sans-serif;
+    background-color: var(--bg);
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
   }
 
   /* Custom scrollbar */
@@ -27,16 +77,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #11111B;
+    background: rgba(148, 163, 184, 0.14);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #3F3F46;
+    background: rgba(100, 116, 139, 0.5);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #52525B;
+    background: rgba(71, 85, 105, 0.7);
   }
 
   /* Remove spinners from number inputs */
@@ -52,69 +102,116 @@
 }
 
 @layer components {
+  .fin-card {
+    @apply bg-[var(--card)] border border-[var(--card-border)] rounded-2xl shadow-[var(--shadow-soft)];
+  }
+
+  .fin-card-hover {
+    @apply fin-card transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--border-hover)] hover:bg-[var(--card-hover)];
+  }
+
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-card-border rounded-2xl;
+    @apply bg-[var(--card)]/90 backdrop-blur-xl border border-[var(--card-border)] rounded-2xl shadow-[var(--shadow-soft)];
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-300 hover:bg-card-hover hover:border-border-hover hover:shadow-card-hover;
+    @apply glass-card transition-all duration-300 hover:bg-[var(--card-hover)] hover:border-[var(--border-hover)] hover:shadow-[var(--shadow-soft)];
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-primary via-primary-light to-highlight bg-clip-text text-transparent;
+    color: var(--primary);
   }
 
   .gradient-border {
-    @apply relative before:absolute before:inset-0 before:rounded-2xl before:p-[1px] before:bg-gradient-to-r before:from-primary/50 before:to-primary-light/50 before:-z-10;
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    padding: 1px;
+    background: var(--primary);
+    z-index: -1;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
   }
 
   .btn-primary {
-    @apply bg-primary hover:bg-primary-hover text-white font-medium px-6 py-2.5 rounded-xl
+    @apply bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-medium px-6 py-2.5 rounded-xl
     transition-all duration-200 active:scale-[0.98]
     disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
   }
 
   .btn-secondary {
-    @apply bg-card hover:bg-card-hover text-text-primary font-medium px-6 py-2.5 rounded-xl
-    border border-card-border hover:border-border-hover
+    @apply bg-[var(--card)] hover:bg-[var(--card-hover)] text-[var(--text-primary)] font-medium px-6 py-2.5 rounded-xl
+    border border-[var(--card-border)] hover:border-[var(--border-hover)]
     transition-all duration-200 active:scale-[0.98]
     disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
   }
 
   .btn-ghost {
-    @apply text-text-secondary hover:text-text-primary hover:bg-card font-medium px-4 py-2 rounded-xl
+    @apply text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card)] font-medium px-4 py-2 rounded-xl
     transition-all duration-200
     disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-danger {
-    @apply bg-negative/10 hover:bg-negative/20 text-negative font-medium px-6 py-2.5 rounded-xl
-    border border-negative/20 hover:border-negative/30
-    transition-all duration-200 active:scale-[0.98]
-    disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+    background-color: var(--negative-muted);
+    color: var(--negative);
+    border: 1px solid rgba(220, 107, 69, 0.2);
+    font-weight: 500;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .btn-danger:hover {
+    opacity: 0.9;
+    border-color: rgba(220, 107, 69, 0.3);
+  }
+
+  .btn-danger:active {
+    transform: scale(0.98);
+  }
+
+  .btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
   }
 
   .input-field {
-    @apply w-full bg-background-secondary border border-card-border rounded-xl px-4 py-3
-    text-text-primary placeholder:text-text-dim
-    focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30
+    @apply w-full bg-[var(--bg-secondary)] border border-[var(--card-border)] rounded-xl px-4 py-3
+    text-[var(--text-primary)] placeholder:text-[var(--text-dim)]
+    focus:outline-none focus:border-[var(--primary)]
     transition-all duration-200;
+  }
+
+  .input-field:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px rgba(21, 155, 114, 0.3);
   }
 
   .select-field {
     @apply input-field appearance-none cursor-pointer pr-10;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A1A1AA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-size: 16px;
     background-position: right 12px center;
     background-repeat: no-repeat;
   }
 
   .label-text {
-    @apply block text-sm font-medium text-text-secondary mb-1.5;
+    @apply block text-sm font-medium text-[var(--text-secondary)] mb-1.5;
   }
 
   .skeleton {
-    @apply bg-card animate-shimmer bg-shimmer bg-shimmer rounded-lg;
+    @apply bg-[var(--card)] animate-shimmer bg-shimmer bg-shimmer rounded-lg;
   }
 }
 

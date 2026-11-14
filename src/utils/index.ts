@@ -98,25 +98,15 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 
 /** Generate a random color from category */
 export function getCategoryColor(category: string): string {
-  const colors: Record<string, string> = {
-    Salary: '#10B981',
-    Freelance: '#06B6D4',
-    Business: '#8B5CF6',
-    Investments: '#F59E0B',
-    Allowance: '#EC4899',
-    'Other Income': '#6366F1',
-    Food: '#EF4444',
-    Housing: '#3B82F6',
-    Transport: '#F97316',
-    Education: '#8B5CF6',
-    Healthcare: '#14B8A6',
-    Shopping: '#EC4899',
-    Entertainment: '#A855F7',
-    Utilities: '#6366F1',
-    Subscriptions: '#06B6D4',
-    'Other Expenses': '#71717A',
-  };
-  return colors[category] || '#8B5CF6';
+  const incomeCategories = new Set([
+    'Salary',
+    'Freelance',
+    'Business',
+    'Investments',
+    'Allowance',
+    'Other Income',
+  ]);
+  return incomeCategories.has(category) ? '#159B72' : '#D65A50';
 }
 
 /** Safely parse a number, returning 0 for invalid inputs */

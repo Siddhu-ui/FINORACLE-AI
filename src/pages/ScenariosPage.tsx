@@ -62,11 +62,11 @@ const TEMPLATES: { name: string; description: string; changes: Omit<SimulationCh
 
 const chartTooltipStyle = {
   contentStyle: {
-    backgroundColor: '#171725',
-    border: '1px solid #2A2A3C',
-    borderRadius: '12px',
+    backgroundColor: 'var(--card)',
+    border: '1px solid var(--card-border)',
+    borderRadius: '8px',
     fontSize: '12px',
-    color: '#F8FAFC',
+    color: 'var(--text-primary)',
   },
 };
 
@@ -440,10 +440,10 @@ export default function ScenariosPage() {
             <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={simulation.projectionData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2A2A3C" opacity={0.5} />
-                  <XAxis dataKey="month" stroke="#A1A1AA" tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                  <XAxis dataKey="month" stroke="#64748B" tick={{ fontSize: 11 }} />
                   <YAxis
-                    stroke="#A1A1AA"
+                    stroke="#64748B"
                     tick={{ fontSize: 11 }}
                     tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
                   />
@@ -463,7 +463,7 @@ export default function ScenariosPage() {
                   <Line
                     type="monotone"
                     dataKey="Scenario"
-                    stroke={simulation.scenario12m >= simulation.baseline12m ? '#10B981' : '#F59E0B'}
+                    stroke={simulation.scenario12m >= simulation.baseline12m ? '#159B72' : '#A87516'}
                     strokeWidth={3}
                     dot={{ r: 3 }}
                   />

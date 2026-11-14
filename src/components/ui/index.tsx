@@ -20,7 +20,7 @@ export function Card({ children, className, hover = false, padding = 'md', onCli
     <div
       onClick={onClick}
       className={cn(
-        'bg-card border border-card-border rounded-2xl',
+        'bg-card border border-card-border rounded-xl',
         paddings[padding],
         hover && 'cursor-pointer transition-all duration-300 hover:bg-card-hover hover:border-border-hover hover:shadow-card-hover',
         onClick && 'cursor-pointer',
@@ -59,7 +59,7 @@ export function StatCard({ title, value, subtitle, icon: Icon, trend, color = 'p
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn('bg-card border border-card-border rounded-2xl p-5')}
+      className={cn('bg-card border border-card-border rounded-xl p-5')}
     >
       <div className="flex items-start justify-between mb-3">
         <p className="text-sm text-text-secondary font-medium">{title}</p>
@@ -94,7 +94,7 @@ interface EmptyStateProps {
 export function EmptyState({ icon: Icon = Sparkles, title, description, action }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-card border border-card-border flex items-center justify-center mb-4">
+      <div className="w-16 h-16 rounded-xl bg-card border border-card-border flex items-center justify-center mb-4">
         <Icon className="w-8 h-8 text-text-muted" />
       </div>
       <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
@@ -157,14 +157,14 @@ export function Modal({ open, isOpen, onClose, title, children, size = 'md' }: M
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-[rgba(23,43,77,0.28)] backdrop-blur-sm"
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className={cn(
-          'relative w-full bg-background-secondary border border-card-border rounded-2xl shadow-card-hover max-h-[85vh] overflow-hidden flex flex-col',
+          'relative w-full bg-card border border-card-border rounded-xl shadow-card-hover max-h-[85vh] overflow-hidden flex flex-col',
           sizes[size]
         )}
       >
@@ -227,11 +227,11 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div onClick={handleClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div onClick={handleClose} className="absolute inset-0 bg-[rgba(23,43,77,0.28)] backdrop-blur-sm" />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full max-w-md bg-background-secondary border border-card-border rounded-2xl p-6"
+        className="relative w-full max-w-md bg-card border border-card-border rounded-xl p-6 shadow-card"
       >
         <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
         <p className="text-sm text-text-secondary mb-6">{bodyText}</p>

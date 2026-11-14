@@ -33,11 +33,11 @@ import type { Transaction } from '@/types';
 
 const chartTooltipStyle = {
   contentStyle: {
-    backgroundColor: '#171725',
-    border: '1px solid #2A2A3C',
-    borderRadius: '12px',
+    backgroundColor: 'var(--card)',
+    border: '1px solid var(--card-border)',
+    borderRadius: '8px',
     fontSize: '12px',
-    color: '#F8FAFC',
+    color: 'var(--text-primary)',
   },
 };
 
@@ -144,7 +144,7 @@ export default function ReportsPage() {
         ],
       ],
       theme: 'grid',
-      headStyles: { fillColor: [99, 102, 241], textColor: [255, 255, 255], fontStyle: 'bold' },
+      headStyles: { fillColor: [21, 155, 114], textColor: [255, 255, 255], fontStyle: 'bold' },
       styles: { fontSize: 10, cellPadding: 5 },
     });
 
@@ -162,7 +162,7 @@ export default function ReportsPage() {
       head: [['Category', 'Total Spent', '% of Total Outflows']],
       body: catRows.length > 0 ? catRows : [['No expense records', '₹0', '0%']],
       theme: 'striped',
-      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255] },
+      headStyles: { fillColor: [21, 155, 114], textColor: [255, 255, 255] },
       styles: { fontSize: 9 },
     });
 
@@ -182,7 +182,7 @@ export default function ReportsPage() {
       head: [['Date', 'Description', 'Category', 'Type', 'Amount']],
       body: txnRows.length > 0 ? txnRows : [['-', 'No transactions', '-', '-', '-']],
       theme: 'striped',
-      headStyles: { fillColor: [71, 85, 105], textColor: [255, 255, 255] },
+      headStyles: { fillColor: [21, 155, 114], textColor: [255, 255, 255] },
       styles: { fontSize: 8 },
     });
 

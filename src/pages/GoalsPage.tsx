@@ -93,7 +93,7 @@ export default function GoalsPage() {
       current_amount: 10000,
       target_date: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       monthly_contribution: 15000,
-      color: '#6366F1',
+      color: '#159B72',
     });
     setModalOpen(true);
   }
@@ -107,7 +107,7 @@ export default function GoalsPage() {
       current_amount: goal.current_amount,
       target_date: goal.target_date,
       monthly_contribution: goal.monthly_contribution,
-      color: goal.color || '#6366F1',
+      color: goal.color || '#159B72',
     });
     setModalOpen(true);
   }
@@ -202,7 +202,7 @@ export default function GoalsPage() {
               <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Overall Completion</span>
               <p className="text-2xl font-bold text-text-primary mt-1">{formatPercent(overallProgress)}</p>
               <div className="mt-2">
-                <ProgressBar value={overallProgress} color="bg-secondary" />
+                <ProgressBar value={overallProgress} color="bg-primary" />
               </div>
             </Card>
 
@@ -247,8 +247,7 @@ export default function GoalsPage() {
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3">
                             <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0"
-                              style={{ backgroundColor: goal.color || '#6366F1' }}
+                              className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary flex-shrink-0"
                             >
                               <Target className="w-5 h-5" />
                             </div>

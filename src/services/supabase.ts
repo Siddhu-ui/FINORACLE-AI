@@ -680,14 +680,14 @@ export const dashboardService = {
       .filter((t) => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
 
-    // If user has not logged an income transaction this month, but configured a planned monthly salary,
-    // we clearly maintain both numbers so user can see planned vs actual
-    const totalIncome = actualIncome > 0 ? actualIncome : plannedBaseIncome;
+    // Actual received inflows are the only income recognized in the ledger.
+    // Profile income is stored as a planning baseline for budgeting, not cash received.
+    const totalIncome = actualIncome;
 
     // Net cash flow: actual money in minus actual money out
     const netCashFlow = actualIncome - totalExpenses;
     const savings = netCashFlow > 0 ? netCashFlow : 0;
-    const savingsRate = totalIncome > 0 ? Math.max(0, Math.min(100, (netCashFlow / totalIncome) * 100)) : 0;
+    const savingsRate = actualIncome > 0 ? Math.max(0, Math.min(100, (netCashFlow / actualIncome) * 100)) : 0;
 
     // 3. Category spending breakdown (only from real transactions)
     const categoryTotals: Record<string, number> = {};
@@ -720,13 +720,8 @@ export const dashboardService = {
       }
     });
 
-    // If current month has base income but no income transactions, reflect base income if configured
-    if (plannedBaseIncome > 0 && (!monthlyGroups[currentMonth] || monthlyGroups[currentMonth].income === 0)) {
-      if (!monthlyGroups[currentMonth]) {
-        monthlyGroups[currentMonth] = { income: plannedBaseIncome, expenses: totalExpenses };
-      }
-    }
-
+    // Do not fabricate historical income from the profile baseline.
+    // Only real transactions are included in trends and recorded inflows.
     const sortedMonthKeys = Object.keys(monthlyGroups).sort();
     const incomeVsExpenses = sortedMonthKeys.map((key) => {
       const [year, month] = key.split('-');

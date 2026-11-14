@@ -45,14 +45,14 @@ type PeriodFilter = 'this_month' | 'last_month' | 'last_3_months' | 'all_time';
 
 const chartTooltipStyle = {
   contentStyle: {
-    background: '#111622',
-    border: '1px solid #1E2638',
-    borderRadius: '12px',
+    background: 'var(--card)',
+    border: '1px solid var(--card-border)',
+    borderRadius: '8px',
     fontSize: '12px',
-    color: '#F8FAFC',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+    color: 'var(--text-primary)',
+    boxShadow: '0 8px 24px rgba(23,43,77,0.08)',
   },
-  labelStyle: { color: '#94A3B8' },
+  labelStyle: { color: 'var(--text-secondary)' },
 };
 
 export default function DashboardPage() {
@@ -448,15 +448,15 @@ export default function DashboardPage() {
                 {data!.income_vs_expenses.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data!.income_vs_expenses} barGap={6}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1E2638" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                       <XAxis
                         dataKey="month"
-                        tick={{ fill: '#94A3B8', fontSize: 11 }}
+                        tick={{ fill: '#64748B', fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis
-                        tick={{ fill: '#94A3B8', fontSize: 11 }}
+                        tick={{ fill: '#64748B', fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
                         tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
@@ -467,14 +467,14 @@ export default function DashboardPage() {
                       />
                       <Bar
                         dataKey="income"
-                        fill="#10B981"
+                        fill="#159B72"
                         radius={[4, 4, 0, 0]}
                         maxBarSize={32}
                         name="Inflow"
                       />
                       <Bar
                         dataKey="expenses"
-                        fill="#EF4444"
+                        fill="#D65A50"
                         radius={[4, 4, 0, 0]}
                         maxBarSize={32}
                         name="Outflow"
@@ -584,19 +584,19 @@ export default function DashboardPage() {
                   <AreaChart data={data!.savings_trend}>
                     <defs>
                       <linearGradient id="savingsGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="#159B72" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#159B72" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E2638" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                     <XAxis
                       dataKey="month"
-                      tick={{ fill: '#94A3B8', fontSize: 11 }}
+                      tick={{ fill: '#64748B', fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
-                      tick={{ fill: '#94A3B8', fontSize: 11 }}
+                      tick={{ fill: '#64748B', fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
@@ -608,7 +608,7 @@ export default function DashboardPage() {
                     <Area
                       type="monotone"
                       dataKey="savings"
-                      stroke="#6366F1"
+                      stroke="#159B72"
                       strokeWidth={2}
                       fill="url(#savingsGrad)"
                       name="Net Surplus"

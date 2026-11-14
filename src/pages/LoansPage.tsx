@@ -44,11 +44,11 @@ type LoanFormValues = z.infer<typeof loanSchema>;
 
 const tooltipStyle = {
   contentStyle: {
-    backgroundColor: '#171725',
-    border: '1px solid #2A2A3C',
-    borderRadius: '12px',
+    backgroundColor: 'var(--card)',
+    border: '1px solid var(--card-border)',
+    borderRadius: '8px',
     fontSize: '12px',
-    color: '#F8FAFC',
+    color: 'var(--text-primary)',
   },
 };
 
@@ -169,8 +169,8 @@ export default function LoansPage() {
 
   const pieData = calculation
     ? [
-        { name: 'Principal Amount', value: principal, color: '#6366F1' },
-        { name: 'Total Interest', value: calculation.totalInterest, color: '#EC4899' },
+        { name: 'Principal Amount', value: principal, color: '#159B72' },
+        { name: 'Total Interest', value: calculation.totalInterest, color: '#D65A50' },
       ]
     : [];
 
@@ -389,10 +389,10 @@ export default function LoansPage() {
                   <div className="h-[180px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={calculation.yearlyTrend}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#2A2A3C" opacity={0.5} />
-                        <XAxis dataKey="year" stroke="#A1A1AA" tick={{ fontSize: 10 }} unit="y" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                        <XAxis dataKey="year" stroke="#64748B" tick={{ fontSize: 10 }} unit="y" />
                         <YAxis
-                          stroke="#A1A1AA"
+                          stroke="#64748B"
                           tick={{ fontSize: 10 }}
                           tickFormatter={(v) => `₹${(v / 100000).toFixed(0)}L`}
                         />
@@ -404,7 +404,7 @@ export default function LoansPage() {
                         <Area
                           type="monotone"
                           dataKey="balance"
-                          stroke="#6366F1"
+                          stroke="#159B72"
                           fill="url(#primaryGrad)"
                           fillOpacity={0.2}
                           name="Remaining Balance"
