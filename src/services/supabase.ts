@@ -53,7 +53,11 @@ export const profileService = {
           .eq('user_id', user.id)
           .single();
 
-        if (!error && data) return data;
+        if (!error && data) {
+          const localProfile = mockStore.getProfile();
+          if (localProfile?.user_id === user.id) return { ...localProfile, ...data };
+          return data;
+        }
       } catch {
         // fallback
       }
@@ -65,7 +69,8 @@ export const profileService = {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    if (isSupabaseConfigured) {
+    const isDemoUser = user.id.startsWith('usr-demo-');
+    if (isSupabaseConfigured && !isDemoUser) {
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -81,12 +86,14 @@ export const profileService = {
           .select()
           .single();
 
-        if (!error && data) return data;
-      } catch {
-        // fallback
+        if (error) throw new Error(error.message);
+        if (data) return data;
+        throw new Error('Profile update returned no record.');
+      } catch (error) {
+        throw error instanceof Error ? error : new Error('Unable to save your profile.');
       }
     }
-    return mockStore.saveProfile(profile);
+    return mockStore.saveProfile({ ...profile, user_id: user.id, email: user.email || profile.email });
   },
 };
 

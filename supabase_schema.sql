@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     date_of_birth DATE,
     occupation TEXT,
     monthly_income NUMERIC(12, 2) DEFAULT 0,
+    income_type TEXT,
+    additional_income_sources JSONB NOT NULL DEFAULT '[]'::jsonb,
+    planning_period_start_day INTEGER NOT NULL DEFAULT 1,
+    onboarding_completed BOOLEAN NOT NULL DEFAULT false,
     currency VARCHAR(10) DEFAULT 'INR',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

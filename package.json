@@ -5,7 +5,7 @@
   "description": "FinOracle AI — A RAG-Powered Financial Scenario Analysis and Simulation System",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest",
