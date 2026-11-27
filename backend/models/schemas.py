@@ -22,3 +22,18 @@ class ScenarioRequest(BaseModel):
 class ChatRequest(BaseModel):
     session_id: str
     message: str
+
+class AuthChatRequest(ChatRequest):
+    pass
+
+class ClassifyRequest(BaseModel):
+    description: str = Field(..., min_length=1, max_length=500)
+    category_hint: str = Field(default="", max_length=100)
+
+class CorrectCategoryRequest(BaseModel):
+    transaction_id: str = Field(..., min_length=1, max_length=100)
+    category: str = Field(..., min_length=1, max_length=100)
+
+class ScenarioConversationRequest(BaseModel):
+    session_id: str = Field(..., min_length=1, max_length=100)
+    message: str = Field(..., min_length=1, max_length=2000)
